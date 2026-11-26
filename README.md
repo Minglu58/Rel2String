@@ -4,6 +4,57 @@ Rel2String generates upper-body, finger, and bow motion for cello and violin fro
 
 https://github.com/user-attachments/assets/c57a512f-8826-42d2-a941-7b600ce0c8f8
 
-# Datasets
+# 1. Prepare Data and Audio Features
+
+## 1.1 Download the original dataset
+
+You should download the original String Performance Dataset (SPD) [here](https://metaverse-ai-lab-thu.github.io/String-Performance-Dataset-SPD/) under `datasets/` folder.
+
+The data structure is like:
+
+```
+datasets/SPD/
+├── cello/
+│   ├── kp3d/cello01.npy
+│   └── audio/cello01.wav
+└── violin/
+    ├── kp3d/violin01.npy
+    └── audio/violin01.wav
+```
+
+## 1.2 Preprocess the data
+
+You can run the following command to obtain the processed data.
+
+```
+python data_process/prepare_spd_canonical_dataset.py \
+  --spd-root datasets/SPD \
+  --output-root datasets/SPD_canonical \
+  --split-dir splits/spd \
+  --fps 30 --origin nut --scale median_nut_to_bridge \
+  --audio-mode copy
+```
+
+Append `--dry-run` to check that the fixed recording lists have matching audio and 3D files before writing the dataset.
+
+Output under `datasets/SPD_canonical/` | Contents |
+| --- | --- |
+| `samples/<instrument>/<take>/audio.wav` | Copy of the synchronized WAV input |
+| `samples/<instrument>/<take>/string_frame.npz` | Body, bow, string and contact points in the canonical frame, plus the transform back to world coordinates |
+| `samples/<instrument>/<take>/playable_relations.npz` | 23 relation channels, their validity masks, and the separately stored `bow_root_bridge_distance` target used for the 24th channel in the final model |
+| `samples/<instrument>/<take>/metadata.json` | Recording ID, split, frame count, and input and output paths |
+| `manifest.json`, `manifest.csv`, and `splits/{train,val,test}.{json,txt}` | Dataset index and fixed recording lists
+
+## 2.3 Cache audio features
+
+Place the [MERT-v1-330M snapshot](https://huggingface.co/m-a-p/MERT-v1-330M/tree/main), including its weights, model code, and processor configuration, in `checkpoints/MERT-v1-330M/`. Run the cache script after building `SPD_canonical` and before starting Stage 1, Stage 2, or evaluation.
+
+```
+python scripts/precompute_audio_features.py --config configs/spd/precompute_mert.yaml
+```
+
+`precompute_mert.yaml` reads the training, validation and test lists and writes one `.npz` per recording to `datasets/SPD_canonical/audio_feature_cache/mert/`. The cache contains MERT embeddings, mel, onset, pitch and four bow dynamics channels aligned to the 30 fps motion frame grid. A cache built by this command already includes the dynamics channels.
 
 # Inference
+
+# Training
