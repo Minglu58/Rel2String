@@ -1,0 +1,166 @@
+# Final single checkpoint-100000; the learned geometry/axial head is loaded automatically.
+# No event-classifier evaluation or QP projection. One file: change smoothing/output for raw.
+mapping_checkpoint_path: ./checkpoints/mapping.pt
+stage2_backend: unet
+mapping_latent_dim: 256
+mapping_categorical_mode: one_hot
+mapping_clamp_continuous: true
+predicted_relation_mask_mode: predicted
+predicted_validity_threshold: 0.5
+predicted_scalar_key: bow_root_bridge_distance
+predicted_scalar_valid_key: bow_root_bridge_distance_valid
+predicted_scalar_transform: none
+predicted_relation_slices:
+- - 0
+  - 24
+hybrid_relation_mask_source: matched
+mapping_batch_size: 8
+mapping_sequence_length: 576
+mapping_window_stride: 96
+mapping_stitching_mode: state_aligned_center_weighted
+mapping_stitching_min_weight: 0.1
+test_data:
+  data_path: datasets/SPD_canonical
+  sequence_length: 64
+  mode: test
+  instruments: cello
+  sr: 16000
+  fps: 30
+  n_mels: 80
+  mel_hop_length: 256
+  window_stride: 64
+  include_last_window: true
+  relation_key: relation_feature_zero_filled
+  relation_mask_key: relation_feature_valid_mask
+  pose_keys:
+  - coco_wholebody_string_frame
+  - bow_string_frame
+  pose_grid_size:
+  - 16
+  - 16
+  pose_fill_missing: zero
+  include_relation_mask_in_condition: false
+  normalize_mel: true
+  cache_audio: true
+  audio_encoder_type: mert
+  audio_feature_cache_dir: datasets/SPD_canonical/audio_feature_cache/mert
+  audio_feature_cache_required: true
+  fmin_note: C2
+  fmax_note: E7
+  num_workers: 4
+  exclude_sample_ids:
+  - violin_violin14
+  - violin_violin24
+  min_bow_valid_rate: 0.95
+test_batch_size: 8
+audio_encoder_type: mert
+num_inference_steps: 50
+scheduler_type: ddim
+device: cuda
+torch_dtype: float16
+use_autocast: true
+seed: 2026
+num_sampling_seeds: 3
+sampling_seeds:
+- 2026
+- 2027
+- 2028
+max_batches: null
+num_visualizations: 8
+save_npy: true
+# Set both to true to render previews with FFmpeg.
+save_video: false
+render_after_inference: false
+render_fps: 30
+include_instrument_context: false
+render_coordinate: string_frame
+use_known_lower_body: true
+mask_inactive_generation_joints: true
+inactive_generation_indices:
+- 9
+- 10
+- 13
+- 14
+- 15
+- 16
+- 17
+- 18
+- 19
+- 20
+- 21
+- 22
+- 23
+- 24
+- 25
+- 26
+- 27
+- 28
+- 29
+- 30
+- 31
+- 32
+- 33
+- 34
+- 35
+- 36
+- 37
+- 38
+- 39
+- 40
+- 41
+- 42
+- 43
+- 44
+- 45
+- 46
+- 47
+- 48
+- 49
+- 50
+- 51
+- 52
+- 53
+- 54
+- 55
+- 56
+- 57
+- 58
+- 59
+- 60
+- 61
+- 62
+- 63
+- 64
+- 65
+- 66
+- 67
+- 68
+- 69
+- 70
+- 71
+- 72
+- 73
+- 74
+- 75
+- 76
+- 77
+- 78
+- 79
+- 80
+- 81
+- 82
+- 83
+- 84
+- 85
+- 86
+- 87
+- 88
+- 89
+- 90
+relation_dropped_slices: []
+# Evaluation reads the config.yaml saved by Stage-2 training.
+checkpoint_dir: ./checkpoints/checkpoint-100000
+output_dir: ./results/test_cello
+bow_endpoint_smoothing_window: 5
+elgar_pitch_cache_dir: datasets/SPD_canonical/elgar_pitch_cache
+elgar_pitch_device: cuda:0
