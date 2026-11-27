@@ -9,8 +9,8 @@ https://github.com/user-attachments/assets/c57a512f-8826-42d2-a941-7b600ce0c8f8
 ```
 git clone
 cd Rel2string
-conda create -n rel2string python==3.8
-conda activate rel2string
+conda create -n Rel2string python==3.8
+conda activate Rel2string
 conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.8 -c pytorch -c nvidia
 % pip install torch==2.0.0 torchvision==0.15.1 torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirement.txt
