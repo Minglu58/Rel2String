@@ -7,7 +7,7 @@ https://github.com/user-attachments/assets/c57a512f-8826-42d2-a941-7b600ce0c8f8
 ## 1. Environment
 
 ```
-git clone
+git clone https://github.com/Minglu58/Rel2String.git
 cd Rel2string
 conda create -n Rel2string python==3.8
 conda activate Rel2string
