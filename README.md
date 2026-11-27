@@ -102,5 +102,5 @@ python scripts/train_stage2.py --config configs/spd/train_stage2.yaml
 
 The final checkpoint is written to `output_dir: results/stage2/`.
 
-Acknowlegements
+## Acknowledgements
 
