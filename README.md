@@ -4,7 +4,7 @@ Rel2String generates upper-body, finger, and bow motion for cello and violin fro
 
 https://github.com/user-attachments/assets/c57a512f-8826-42d2-a941-7b600ce0c8f8
 
-# 1. Environment
+## 1. Environment
 
 ```
 git clone
@@ -16,9 +16,9 @@ conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=
 pip install -r requirement.txt
 ```
 
-# 2. Prepare Data and Audio Features
+## 2. Prepare Data and Audio Features
 
-## 2.1 Download the original dataset
+### 2.1 Download the original dataset
 
 You should download the original String Performance Dataset (SPD) [here](https://metaverse-ai-lab-thu.github.io/String-Performance-Dataset-SPD/) under `datasets/` folder.
 
@@ -34,7 +34,7 @@ datasets/SPD/
     └── audio/violin01.wav
 ```
 
-## 2.2 Preprocess the data
+### 2.2 Preprocess the data
 
 You can run the following command to obtain the processed data.
 
@@ -57,7 +57,7 @@ Output under `datasets/SPD_canonical/` | Contents |
 | `samples/<instrument>/<take>/metadata.json` | Recording ID, split, frame count, and input and output paths |
 | `manifest.json`, `manifest.csv`, and `splits/{train,val,test}.{json,txt}` | Dataset index and fixed recording lists
 
-## 2.3 Cache audio features
+### 2.3 Cache audio features
 
 Place the [MERT-v1-330M snapshot](https://huggingface.co/m-a-p/MERT-v1-330M/tree/main), including its weights, model code, and processor configuration, in `checkpoints/MERT-v1-330M/`. Run the cache script after building `SPD_canonical` and before starting Stage 1, Stage 2, or evaluation.
 
@@ -67,7 +67,7 @@ python scripts/precompute_audio_features.py --config configs/spd/precompute_mert
 
 `precompute_mert.yaml` reads the training, validation and test lists and writes one `.npz` per recording to `datasets/SPD_canonical/audio_feature_cache/mert/`. The cache contains MERT embeddings, mel, onset, pitch and four bow dynamics channels aligned to the 30 fps motion frame grid. A cache built by this command already includes the dynamics channels.
 
-# 3. Download pretrained model weights
+## 3. Download pretrained model weights
 
 Place the pretrained model files under `checkpoints/` at the paths used by the active YAML. Stage-2 training initializes the pose UNet from scratch, and evaluation loads the Stage-2 checkpoint listed below.
 
@@ -77,7 +77,7 @@ Asset | Path or contents |
 | Frozen Stage 1 | `checkpoints/mapping.pt` |
 | Final Stage-2 directory | `checkpoints/checkpoint-100000/` |
 
-# 4. Inference
+## 4. Inference
 
 You can use the pretrained weights above to reproduce the results.
 
@@ -92,7 +92,7 @@ python scripts/evaluate.py --config configs/spd/test.yaml \
   test_data.instruments=violin output_dir=./results/test_violin
 ```
 
-# 5. Retrain Stage 2
+## 5. Retrain Stage 2
 
 `configs/spd/train_stage2.yaml` contains the full recipe. Its top-level fields set the frozen checkpoint, run paths, and training budget. The inline `stage2_config` section holds the data, model, losses, optimizer, and validation settings.
 
@@ -101,3 +101,6 @@ python scripts/train_stage2.py --config configs/spd/train_stage2.yaml
 ```
 
 The final checkpoint is written to `output_dir: results/stage2/`.
+
+Acknowlegements
+
