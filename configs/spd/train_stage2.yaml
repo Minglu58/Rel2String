@@ -1,0 +1,284 @@
+# ONE training run: fixed Stage-1, random Stage-2 + BSD/FCD/axial heads, final 100k.
+# Train ONLY on train. train+val below is frozen Stage-1 cache preparation, not optimizer data.
+# Continuous final-3D bow supervision; no audio-event report, QP projection, old weights or average.
+stage2_checkpoint_path: null
+# Frozen 0917 Stage-1 checkpoint from the original run.
+mapping_checkpoint_path: ./checkpoints/mapping.pt
+train_from_scratch: true
+train_from_scratch_steps: 100000
+predicted_relation_probability: 1.0
+unet_learning_rate: 0.0001
+condition_encoder_learning_rate: 0.0001
+resume_optimizer_state: false
+# Resume the SAME run: set checkpoint-90000 (or its path) and resume_optimizer_state: true.
+# Keep train_from_scratch: true, total steps 100000, output/cache and all training options unchanged.
+resume_from_checkpoint: null
+mapping_latent_dim: 256
+mapping_batch_size: 8
+mapping_num_workers: 4
+mapping_sequence_length: 576
+mapping_window_stride: 96
+mapping_stitching_mode: state_aligned_center_weighted
+mapping_stitching_min_weight: 0.1
+mapping_device: cuda
+mapping_categorical_mode: one_hot
+mapping_clamp_continuous: true
+predicted_relation_mask_mode: predicted
+predicted_validity_threshold: 0.5
+predicted_scalar_key: bow_root_bridge_distance
+predicted_scalar_valid_key: bow_root_bridge_distance_valid
+predicted_relation_slices:
+- - 0
+  - 24
+hybrid_relation_mask_source: matched
+relation_mix_granularity: window
+relation_mix_mode: group
+relation_group_probabilities:
+- name: contact
+  slices:
+  - - 0
+    - 6
+  probability: 1.0
+- name: bow_string
+  slices:
+  - - 6
+    - 10
+  probability: 1.0
+- name: bow_geometry
+  slices:
+  - - 10
+    - 20
+  probability: 1.0
+- name: contact_aux
+  slices:
+  - - 20
+    - 23
+  probability: 1.0
+- name: bridge_scalar
+  slices:
+  - - 23
+    - 24
+  probability: 1.0
+relation_mix_curriculum: null
+rebuild_predicted_relations: false
+prepare_only: false
+# New output and cache paths for this training run.
+output_dir: ./results/stage2
+predicted_relation_dataset_dir: ./results/stage2_predicted_relations
+relation_dropped_slices: []
+predicted_relation_source_mode: train+val
+
+# Complete Stage-2 training settings. Run paths and resume options are set above.
+stage2_config:
+  train_data:
+    data_path: datasets/SPD_canonical
+    sequence_length: 64
+    mode: train
+    sr: 16000
+    fps: 30
+    n_mels: 80
+    mel_hop_length: 256
+    window_stride: 16
+    include_last_window: true
+    relation_key: relation_feature_zero_filled
+    relation_mask_key: relation_feature_valid_mask
+    pose_keys:
+    - coco_wholebody_string_frame
+    - bow_string_frame
+    pose_grid_size:
+    - 16
+    - 16
+    pose_fill_missing: ffill
+    include_relation_mask_in_condition: true
+    normalize_mel: true
+    cache_audio: true
+    fmin_note: C2
+    fmax_note: E7
+    num_workers: 4
+    exclude_sample_ids:
+    - violin_violin14
+    - violin_violin24
+    min_bow_valid_rate: 0.95
+    audio_encoder_type: mert
+    audio_feature_cache_dir: datasets/SPD_canonical/audio_feature_cache/mert
+    audio_feature_cache_required: true
+    relation_extra_keys:
+    - bow_root_bridge_distance
+  use_validation: true
+  learning_rate: 0.0001
+  train_batch_size: 8
+  max_train_steps: 100000
+  checkpointing_steps: 10000
+  noise_loss_weight: 1.0
+  pose_reconstruction_weight: 0.02
+  velocity_loss_weight: 0.03
+  acceleration_loss_weight: 0.05
+  left_hand_local_loss_weight: 0.05
+  body_hand_wrist_offset_loss_weight: 0.0
+  contact_geometry_loss_weight: 0.1
+  contact_distance_loss: l1
+  contact_string_ce_loss_weight: 0.0
+  contact_string_ce_temperature: 0.02
+  contact_finger_supervision: pred_min
+  contact_fingertip_indices:
+  - 99
+  - 103
+  - 107
+  - 111
+  bow_position_loss_weight: 0.5
+  bow_direction_loss_weight: 0.25
+  bow_string_loss_weight: 0.5
+  bow_radial_velocity_loss_weight: 0.0
+  bow_radial_velocity_loss_beta: 0.01
+  bow_endpoint_smoothness_loss_weight: 0.0
+  bow_endpoint_smoothness_window: 5
+  bow_endpoint_smoothness_exclude_radius: 3
+  bow_endpoint_smoothness_min_velocity: 0.001
+  bow_endpoint_radial_stable_sign_loss_weight: 0.0
+  bow_endpoint_radial_stable_sign_window: 1
+  bow_endpoint_radial_stable_sign_exclude_radius: 3
+  bow_endpoint_radial_stable_sign_min_velocity: 0.001
+  bow_endpoint_radial_stable_sign_margin: 0.0002
+  geometry_loss_start_step: 16000
+  auxiliary_timestep_fraction: 0.2
+  structure_timestep_fraction: 1.0
+  geometry_timestep_fraction: 0.5
+  auxiliary_loss_warmup_steps: 6000
+  body_joint_weight: 1.0
+  left_hand_joint_weight: 3.0
+  right_hand_joint_weight: 2.0
+  bow_joint_weight: 3.0
+  fingertip_joint_weight: 5.0
+  face_joint_weight: 0.0
+  lower_body_joint_weight: 0.0
+  torso_anchor_joint_weight: 2.0
+  ignored_joint_weight: 0.0
+  ignored_joint_indices:
+  - 9
+  - 10
+  num_train_timesteps: 1000
+  prediction_type: v_prediction
+  cond_hidden_dim: 256
+  cond_dim: 320
+  cond_layers: 2
+  cond_heads: 4
+  condition_encoder_type: gated_fusion
+  audio_encoder_type: mert
+  audio_encoder_device: cuda
+  audio_encoder_dtype: float16
+  audio_encoder_local_files_only: true
+  audio_feature_cache_dir: datasets/SPD_canonical/audio_feature_cache/mert
+  audio_feature_cache_required: true
+  dual_condition_include_relation_mask: false
+  dual_relation_gate_init: 0.2
+  unet_block_out_channels:
+  - 128
+  - 256
+  - 512
+  unet_layers_per_block: 1
+  unet_attention_head_dim:
+  - 4
+  - 4
+  - 8
+  lr_scheduler: constant
+  lr_warmup_steps: 0
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_weight_decay: 0.01
+  adam_epsilon: 1.0e-08
+  max_grad_norm: 1.0
+  gradient_accumulation_steps: 1
+  gradient_checkpointing: false
+  mixed_precision: 'no'
+  scale_lr: false
+  seed: 33
+  relation_feature_dim: 24
+  bow_radial_velocity_direction_loss_weight: 0.0
+  bow_reversal_event_loss_weight: 0.0
+  joint_geometry_options:
+    hidden_dim: 64
+    dilations:
+    - 1
+    - 2
+    - 4
+    bow_max_translation: 0.005
+    left_max_translation: 0.02
+    contact_margin: 0.01
+    input_smoothing_windows:
+    - 1
+    - 5
+    validation_smoothing_window: 5
+    timestep_fraction: 0.2
+    loss_weight: 0.05
+    warmup_steps: 10000
+    bsd_scale: 0.01
+    fcd_scale: 0.02
+    position_scale: 0.05
+    bow_velocity_scale: 0.001
+    left_velocity_scale: 0.002
+    position_weight: 0.1
+    movement_weight: 0.01
+    velocity_weight: 0.1
+    log_interval: 100
+    bow_trace:
+      max_axial_translation: 0.01
+      dilations:
+      - 1
+      - 2
+      - 4
+      - 8
+      distance_scale: 0.05
+      velocity_scale: 0.001
+      lags:
+      - 1
+      - 3
+      - 5
+      distance_weight: 1.0
+      velocity_weight: 1.0
+      cosine_weight: 0.25
+      movement_weight: 0.01
+      acceleration_weight: 0.05
+      loss_weight: 0.05
+      max_noise_loss_fraction: 0.25
+      timestep_fraction: 0.1
+      start_step: 10000
+      warmup_steps: 10000
+  validation_steps: 5000
+  validation_max_batches: 1000000
+  validation_sampling_steps: 20
+  validation_sampling_max_batches: 8
+  best_checkpoint_metric: null
+  validation_data:
+    data_path: datasets/SPD_canonical
+    sequence_length: 64
+    mode: val
+    sr: 16000
+    fps: 30
+    n_mels: 80
+    mel_hop_length: 256
+    window_stride: 64
+    include_last_window: true
+    relation_key: relation_feature_zero_filled
+    relation_mask_key: relation_feature_valid_mask
+    pose_keys:
+    - coco_wholebody_string_frame
+    - bow_string_frame
+    pose_grid_size:
+    - 16
+    - 16
+    pose_fill_missing: ffill
+    include_relation_mask_in_condition: true
+    normalize_mel: true
+    cache_audio: true
+    fmin_note: C2
+    fmax_note: E7
+    num_workers: 4
+    exclude_sample_ids:
+    - violin_violin14
+    - violin_violin24
+    min_bow_valid_rate: 0.95
+    audio_encoder_type: mert
+    audio_feature_cache_dir: datasets/SPD_canonical/audio_feature_cache/mert
+    audio_feature_cache_required: true
+    relation_extra_keys:
+    - bow_root_bridge_distance

@@ -1,0 +1,108 @@
+# Bow-dynamics audio channels: give Stage-1 explicit continuous transient cues.
+#
+# Single logical variable vs 0916_structured_tcn_bigru_bridge_scalar_cosine
+# (checkpoint-15000): the onset input expands from 1 channel (binary impulse)
+# to 1+4 channels (impulse + onset_strength / spectral_flux / log_rms /
+# hf_ratio, per-take z-scored, precomputed into the audio feature cache).
+# The onset_encoder is zero-padded at warm start, so step 0 reproduces the
+# cosine checkpoint exactly - any change is attributable to the new channels.
+#
+# Rationale: high-freq Pearson has been stuck at ~0.555 across every loss /
+# window / ensemble experiment. The diagnosis is that the binary onset
+# impulse discards graded transient energy and MERT (25 Hz, semantic) blurs
+# frame-level timing; these channels add exactly that missing information.
+#
+# Before training, upgrade the cache in place (MERT features preserved):
+#   python scripts/precompute_audio_features.py --dynamics-only \
+#     --config configs/spd/train_stage1.yaml
+# Use checkpoint-15000.pt from this rerun to match the reported checkpoint selection.
+# Keep the 20,000-step schedule used by the original training configuration.
+output_dir: "./results/reproduction/stage1"
+initial_checkpoint_path: "./checkpoints/mapping_0916.pt"
+train_data:
+  data_path: "datasets/SPD_canonical"
+  sequence_length: 96
+  mode: "train"
+  sr: 16000
+  fps: 30
+  n_mels: 80
+  mel_hop_length: 256
+  window_stride: 16
+  include_last_window: true
+  relation_key: "relation_feature_zero_filled"
+  relation_mask_key: "relation_feature_valid_mask"
+  bow_root_bridge_distance_key: "bow_root_bridge_distance"
+  bow_root_bridge_half_bow_key: "bow_root_bridge_half_bow"
+  use_bow_dynamics: true
+  cache_audio: true
+  normalize_mel: true
+  audio_encoder_type: "mert"
+  audio_feature_cache_dir: "datasets/SPD_canonical/audio_feature_cache/mert"
+  audio_feature_cache_required: true
+  fmin_note: "C2"
+  fmax_note: "E7"
+  num_workers: 4
+validation_data: null
+mapping_model_type: "structured_tcn_bigru"
+structured_tcn_layers: 4
+structured_tcn_kernel_size: 5
+structured_gru_layers: 2
+structured_bow_step_scale: 0.10
+bow_reversal_sharpen_tau: 0.0
+predict_bow_root_bridge_distance: true
+bow_root_bridge_distance_loss_weight: 1.0
+bow_root_bridge_velocity_loss_weight: 0.5
+bow_root_bridge_cosine_loss_weight: 2.0
+bow_root_bridge_velocity_cosine_loss_weight: 1.0
+bow_root_bridge_smooth_l1_beta: 0.02
+train_batch_size: 32
+max_train_steps: 20000
+# Slightly higher than the cosine run's 2.5e-5: the new channels start from
+# zero weights and need to grow into the fusion, while the trunk only needs
+# gentle adaptation.
+learning_rate: 5e-5
+latent_dim: 256
+seed: 2026
+save_steps: 2500
+mse_weight: 1.0
+l1_weight: 1.0
+contact_ce_weight: 1.0
+bow_ce_weight: 1.0
+predict_validity: true
+use_positional_encoding: false
+pretrained_audio_hidden_dim: 128
+num_instruments: 2
+instrument_embedding_dim: 16
+validity_bce_weight: 0.5
+dropout: 0.1
+max_grad_norm: 1.0
+warmup_steps: 500
+min_lr_ratio: 0.1
+class_weight_max: 4.0
+validity_pos_weight_max: 20.0
+continuous_feature_weights: [0,0,0,0,2,1,0,0,0,0,2,4,1,1,1,1,1,3,3,3,1,1,1]
+temporal_feature_weights: [0,0,0,0,0.5,0.25,0,0,0,0,1,4,0.5,0.5,1,1,1,4,4,4,0,0.25,0.25]
+velocity_loss_weight: 1.0
+acceleration_loss_weight: 0.20
+bow_t_direction_loss_weight: 0.05
+bow_t_event_margin_loss_weight: 0.0
+bow_t_static_loss_weight: 0.0
+bow_t_event_margin: 0.005
+bow_t_reversal_loss_weight: 0.0
+bow_t_reversal_event_weight: 1.0
+bow_t_reversal_consistency_loss_weight: 0.0
+bow_t_reversal_positive_weight: 1.0
+bow_t_ignore_string_transitions: true
+bow_mid_direction_loss_weight: 0.2
+bow_transition_ce_loss_weight: 0.25
+temporal_smooth_l1_beta: 0.02
+bow_t_direction_temperature: 0.05
+bow_t_min_velocity: 0.005
+bow_mid_min_speed: 0.005
+structured_direction_loss_weight: 0.50
+structured_direction_class_weights: [1.0, 0.25, 1.0]
+structured_reversal_loss_weight: 0.10
+structured_reversal_pos_weight: 4.0
+structured_bow_step_loss_weight: 0.10
+structured_bow_step_beta: 0.05
+structured_bow_step_target_max: 1.0

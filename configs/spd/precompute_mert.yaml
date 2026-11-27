@@ -1,0 +1,17 @@
+audio_encoder_type: mert
+audio_encoder_layer: -1
+audio_encoder_device: cuda
+audio_encoder_dtype: float16
+audio_encoder_normalize: true
+audio_encoder_local_files_only: true
+audio_feature_cache_dir: datasets/SPD_canonical/audio_feature_cache/mert
+train_data:
+  data_path: datasets/SPD_canonical
+  mode: train+val+test
+  sequence_length: 64
+  sr: 16000
+  fps: 30
+  n_mels: 80
+  mel_hop_length: 256
+  fmin_note: C2
+  fmax_note: E7
