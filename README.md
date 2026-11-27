@@ -97,7 +97,7 @@ python scripts/evaluate.py --config configs/spd/test.yaml \
 `configs/spd/train_stage2.yaml` contains the full recipe. Its top-level fields set the frozen checkpoint, run paths, and training budget. The inline `stage2_config` section holds the data, model, losses, optimizer, and validation settings.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python scripts/train_stage2.py --config configs/spd/train_stage2.yaml
+python scripts/train_stage2.py --config configs/spd/train_stage2.yaml
 ```
 
 The final checkpoint is written to `output_dir: results/stage2/`.
